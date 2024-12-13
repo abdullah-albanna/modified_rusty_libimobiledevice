@@ -177,6 +177,7 @@ pub fn event_subscribe(_cb: IDeviceEventCallback) -> Result<(), IdeviceError> {
 }
 
 // Structs
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Device {
     pub(crate) pointer: unsafe_bindings::idevice_t,
 }
