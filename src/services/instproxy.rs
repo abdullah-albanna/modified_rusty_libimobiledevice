@@ -1,11 +1,21 @@
 // jkcoxson
 
-use std::ffi::{CStr, CString};
+use std::{ffi::{CStr, CString},
+          mem::ManuallyDrop};
+
+use once_cell::sync::Lazy;
+use std::ffi::c_void;
 
 use crate::{bindings as unsafe_bindings, error::InstProxyError, idevice::Device};
 
 use log::info;
 use plist_plus::Plist;
+
+pub type CommandPlist = ManuallyDrop<Plist>;
+pub type StatusPlist = ManuallyDrop<Plist>;
+
+static CALLBACK: Lazy<Mutex<Option<Box<dyn Fn(CommandPlist, StatusPlist) + Send + Sync>>>> =
+    Lazy::new(|| Mutex::new(None));
 
 /// Manages installing, removing and modifying applications on the device
 pub struct InstProxyClient<'a> {
@@ -13,6 +23,22 @@ pub struct InstProxyClient<'a> {
     pub label: String,
     phantom: std::marker::PhantomData<&'a Device>,
 }
+
+unsafe extern "C" fn installation_status_callback(
+    command: *mut ::std::os::raw::c_void,
+    status: *mut ::std::os::raw::c_void,
+    _: *mut c_void,
+) {
+    let command = Plist::from(command);
+    let status = Plist::from(status);
+
+    let command = ManuallyDrop::new(command);
+    let status = ManuallyDrop::new(status);
+
+    println!("{:#?}", command);
+    println!("{:#?}", status);
+}
+
 
 unsafe impl Send for InstProxyClient<'_> {}
 unsafe impl Sync for InstProxyClient<'_> {}
@@ -243,6 +269,48 @@ impl InstProxyClient<'_> {
 
         Ok(())
     }
+
+    pub fn install_with_callback<F>(
+        &self,
+        pkg_path: impl Into<String>,
+        client_options: Option<Plist>,
+        callback: Option<F>,
+    ) -> Result<(), InstProxyError>
+    where
+        F: Fn(CommandPlist, StatusPlist) + 'static + Sync + Send,
+    {
+        if let Some(cb) = callback {
+            *CALLBACK.lock().unwrap() = Some(Box::new(cb));
+        }
+
+        info!("Instproxy install");
+        let pkg_path_c_string = CString::new(pkg_path.into()).unwrap();
+
+        let ptr = client_options
+            .as_ref()
+            .map_or(std::ptr::null_mut(), |v| v.get_pointer());
+
+        let result = unsafe {
+            unsafe_bindings::instproxy_install(
+                self.pointer,
+                pkg_path_c_string.as_ptr(),
+                ptr,
+                Some(installation_status_callback), // I feel like this will segfault. The bindings are probably wrong.
+                std::ptr::null_mut(),
+            )
+        }
+        .into();
+
+        info!("{:#?}", result);
+
+        if result != InstProxyError::Success {
+            return Err(result);
+        }
+
+        Ok(())
+    }
+
+
 
     /// Updates a package on the device
     /// # Arguments
