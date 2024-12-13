@@ -10,6 +10,8 @@ use crate::{bindings as unsafe_bindings, error::InstProxyError, idevice::Device}
 
 use log::info;
 use plist_plus::Plist;
+use std::sync::Mutex;
+
 
 pub type CommandPlist = ManuallyDrop<Plist>;
 pub type StatusPlist = ManuallyDrop<Plist>;
