@@ -1,7 +1,9 @@
 // jkcoxson
 
-use std::{ffi::{CStr, CString},
-          mem::ManuallyDrop};
+use std::{
+    ffi::{CStr, CString},
+    mem::ManuallyDrop,
+};
 
 use once_cell::sync::Lazy;
 use std::ffi::c_void;
@@ -11,7 +13,6 @@ use crate::{bindings as unsafe_bindings, error::InstProxyError, idevice::Device}
 use log::info;
 use plist_plus::Plist;
 use std::sync::Mutex;
-
 
 pub type CommandPlist = ManuallyDrop<Plist>;
 pub type StatusPlist = ManuallyDrop<Plist>;
@@ -31,16 +32,22 @@ unsafe extern "C" fn installation_status_callback(
     status: *mut ::std::os::raw::c_void,
     _: *mut c_void,
 ) {
-    let command = Plist::from(command);
-    let status = Plist::from(status);
+    // Lock the callback mutex to safely access the global callback.
+    if let Ok(callback_guard) = CALLBACK.lock() {
+        if let Some(callback) = &*callback_guard {
+            // Convert raw pointers to `Plist` objects.
+            let command_plist = Plist::from(command);
+            let status_plist = Plist::from(status);
 
-    let command = ManuallyDrop::new(command);
-    let status = ManuallyDrop::new(status);
+            // Wrap in `ManuallyDrop` to manage cleanup properly.
+            let command_plist = ManuallyDrop::new(command_plist);
+            let status_plist = ManuallyDrop::new(status_plist);
 
-    println!("{:#?}", command);
-    println!("{:#?}", status);
+            // Invoke the callback with the command and status.
+            callback(command_plist, status_plist);
+        }
+    }
 }
-
 
 unsafe impl Send for InstProxyClient<'_> {}
 unsafe impl Sync for InstProxyClient<'_> {}
@@ -311,8 +318,6 @@ impl InstProxyClient<'_> {
 
         Ok(())
     }
-
-
 
     /// Updates a package on the device
     /// # Arguments
