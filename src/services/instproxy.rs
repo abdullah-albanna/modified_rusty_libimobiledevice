@@ -3,10 +3,10 @@
 use std::{
     ffi::{CStr, CString},
     mem::ManuallyDrop,
+    ops::Deref,
 };
 
 use once_cell::sync::Lazy;
-use std::ffi::c_void;
 
 use crate::{bindings as unsafe_bindings, error::InstProxyError, idevice::Device};
 
@@ -14,9 +14,36 @@ use log::info;
 use plist_plus::Plist;
 use std::sync::Mutex;
 
-pub type CommandPlist = ManuallyDrop<Plist>;
-pub type StatusPlist = ManuallyDrop<Plist>;
+pub struct CommandPlist(ManuallyDrop<Plist>);
+pub struct StatusPlist(ManuallyDrop<Plist>);
 
+impl std::fmt::Debug for StatusPlist {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("StatusPlist").field(&*self.0).finish()
+    }
+}
+
+impl std::fmt::Debug for CommandPlist {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("CommandPlist").field(&*self.0).finish()
+    }
+}
+
+impl Deref for CommandPlist {
+    type Target = Plist;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Deref for StatusPlist {
+    type Target = Plist;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 static CALLBACK: Lazy<Mutex<Option<Box<dyn Fn(CommandPlist, StatusPlist) + Send + Sync>>>> =
     Lazy::new(|| Mutex::new(None));
 
@@ -30,18 +57,17 @@ pub struct InstProxyClient<'a> {
 unsafe extern "C" fn installation_status_callback(
     command: *mut ::std::os::raw::c_void,
     status: *mut ::std::os::raw::c_void,
-    _: *mut c_void,
+    _: *mut ::std::os::raw::c_void,
 ) {
     // Lock the callback mutex to safely access the global callback.
     if let Ok(callback_guard) = CALLBACK.lock() {
         if let Some(callback) = &*callback_guard {
-            // Convert raw pointers to `Plist` objects.
             let command_plist = Plist::from(command);
             let status_plist = Plist::from(status);
 
             // Wrap in `ManuallyDrop` to manage cleanup properly.
-            let command_plist = ManuallyDrop::new(command_plist);
-            let status_plist = ManuallyDrop::new(status_plist);
+            let command_plist = CommandPlist(ManuallyDrop::new(command_plist));
+            let status_plist = StatusPlist(ManuallyDrop::new(status_plist));
 
             // Invoke the callback with the command and status.
             callback(command_plist, status_plist);
