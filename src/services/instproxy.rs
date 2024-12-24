@@ -4,12 +4,13 @@ use std::{
     ffi::{CStr, CString},
     mem::ManuallyDrop,
     ops::Deref,
-    sync::RwLock,
+    sync::Mutex,
 };
 
 use crate::{bindings as unsafe_bindings, error::InstProxyError, idevice::Device};
 
 use log::info;
+use once_cell::sync::Lazy;
 use plist_plus::Plist;
 
 pub struct CommandPlist(ManuallyDrop<Plist>);
@@ -47,7 +48,8 @@ impl Deref for StatusPlist {
 type CallbackFunction = Box<dyn Fn(CommandPlist, StatusPlist) + Send + Sync>;
 
 // Global callback storage
-static INSTALLATION_CALLBACK: RwLock<Option<CallbackFunction>> = RwLock::new(None);
+static INSTALLATION_CALLBACK: Lazy<Mutex<Option<CallbackFunction>>> =
+    Lazy::new(|| Mutex::new(None));
 
 /// Manages installing, removing and modifying applications on the device
 pub struct InstProxyClient<'a> {
@@ -61,9 +63,8 @@ unsafe extern "C" fn installation_status_callback(
     status: *mut ::std::os::raw::c_void,
     _: *mut ::std::os::raw::c_void,
 ) {
-    // Lock the callback mutex to safely access the global callback.
-    if let Ok(callback_guard) = INSTALLATION_CALLBACK.read() {
-        if let Some(callback) = &*callback_guard {
+    if let Ok(callback_mutex) = INSTALLATION_CALLBACK.lock() {
+        if let Some(callback) = &*callback_mutex {
             let command_plist = Plist::from(command);
             let status_plist = Plist::from(status);
 
@@ -317,7 +318,7 @@ impl InstProxyClient<'_> {
         F: Fn(CommandPlist, StatusPlist) + 'static + Sync + Send,
     {
         if let Some(cb) = callback {
-            if let Ok(mut inner) = INSTALLATION_CALLBACK.write() {
+            if let Ok(mut inner) = INSTALLATION_CALLBACK.lock() {
                 *inner = Some(Box::new(cb));
             }
         }

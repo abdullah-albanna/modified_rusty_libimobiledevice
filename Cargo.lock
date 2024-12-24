@@ -482,6 +482,7 @@ dependencies = [
  "cmake",
  "libc",
  "log",
+ "once_cell",
  "openssl",
  "plist_plus",
 ]
