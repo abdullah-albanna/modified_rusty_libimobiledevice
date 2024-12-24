@@ -177,7 +177,8 @@ fn main() {
                     return;
                 }
             };
-            let info_plist = match plist_plus::Plist::from_bin(buf) {
+            let buf = String::from_utf8_lossy(&buf);
+            let info_plist = match plist_plus::Plist::from_xml(buf.to_string()) {
                 Ok(p) => p,
                 Err(_) => {
                     println!("Error converting extracted file to Plist!!");
@@ -271,9 +272,10 @@ fn main() {
     };
 
     println!("Installing...");
-    match inst_client.install(
+    match inst_client.install_with_callback(
         format!("./{}/{}/app.ipa", PKG_PATH, bundle_id),
         Some(client_opts.clone()), // nobody understands libplist, but clone is necessary I guess
+        Some(|x, y| println!("{:#?}, {:#?}", x, y)),
     ) {
         Ok(_) => {}
         Err(e) => {
@@ -283,6 +285,7 @@ fn main() {
     }
 
     println!("Done!");
+    std::thread::sleep(std::time::Duration::from_secs(10));
 }
 
 #[derive(PartialEq, Eq)]
