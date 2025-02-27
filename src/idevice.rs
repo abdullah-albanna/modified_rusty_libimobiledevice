@@ -1,6 +1,5 @@
 // jkcoxson
 
-use crate::bindings as unsafe_bindings;
 use crate::bindings::idevice_info_t;
 use crate::callback::IDeviceEventCallback;
 use crate::error::{
@@ -12,6 +11,7 @@ use crate::services::heartbeat::HeartbeatClient;
 use crate::services::lockdownd::LockdowndClient;
 use crate::services::misagent::MisagentClient;
 use crate::services::mobile_image_mounter::MobileImageMounter;
+use crate::{bindings as unsafe_bindings, callback};
 use core::fmt;
 use log::{info, trace, warn};
 use std::ffi::CStr;
@@ -172,8 +172,24 @@ pub fn set_debug(debug: bool) {
     unsafe { unsafe_bindings::idevice_set_debug_level(debug) }
 }
 
-pub fn event_subscribe(_cb: IDeviceEventCallback) -> Result<(), IdeviceError> {
-    todo!()
+pub fn event_subscribe(cb: IDeviceEventCallback) -> Result<(), IdeviceError> {
+    let callback_box = Box::new(cb);
+    let callback_ptr = Box::into_raw(callback_box) as *mut c_void;
+
+    let result = unsafe {
+        unsafe_bindings::idevice_event_subscribe(
+            Some(callback::idevice_event_callback),
+            callback_ptr,
+        )
+    }
+    .into();
+
+    if result != IdeviceError::Success {
+        unsafe { drop(Box::from_raw(callback_ptr as *mut IDeviceEventCallback)) };
+        return Err(result);
+    }
+
+    Ok(())
 }
 
 // Structs
@@ -572,12 +588,34 @@ pub struct IDeviceEvent {
     pub(crate) _pointer: unsafe_bindings::idevice_event_t,
 }
 
+impl IDeviceEvent {
+    pub fn event_type(&self) -> EventType {
+        match self._pointer.event {
+            unsafe_bindings::idevice_event_type_IDEVICE_DEVICE_ADD => EventType::Add,
+            unsafe_bindings::idevice_event_type_IDEVICE_DEVICE_REMOVE => EventType::Remove,
+            unsafe_bindings::idevice_event_type_IDEVICE_DEVICE_PAIRED => EventType::Pair,
+            _ => panic!("Unknown event type"),
+        }
+    }
+
+    pub fn udid(&self) -> String {
+        unsafe { CStr::from_ptr(self._pointer.udid) }
+            .to_string_lossy()
+            .into_owned()
+    }
+
+    pub fn conn_type(&self) -> u32 {
+        self._pointer.conn_type
+    }
+}
+
 impl From<unsafe_bindings::idevice_event_t> for IDeviceEvent {
     fn from(_pointer: unsafe_bindings::idevice_event_t) -> Self {
         IDeviceEvent { _pointer }
     }
 }
 
+#[derive(Debug)]
 pub enum EventType {
     Add,
     Remove,
