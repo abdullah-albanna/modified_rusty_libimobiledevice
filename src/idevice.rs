@@ -191,6 +191,15 @@ pub fn event_subscribe(cb: IDeviceEventCallback) -> Result<(), IdeviceError> {
 
     Ok(())
 }
+pub fn event_unsubscribe() -> Result<(), IdeviceError> {
+    let result = unsafe { unsafe_bindings::idevice_event_unsubscribe() };
+
+    if result != IdeviceError::Success as i32 {
+        return Err(IdeviceError::from(result));
+    }
+
+    Ok(())
+}
 
 // Structs
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
