@@ -12,6 +12,7 @@ use crate::{
 
 use plist_plus::{Plist, PlistType};
 
+#[derive(Debug, Clone)]
 pub struct MobileSyncClient<'a> {
     pub(crate) pointer: unsafe_bindings::mobilesync_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

@@ -10,6 +10,7 @@ use log::info;
 
 use crate::{bindings as unsafe_bindings, error::DebugServerError, idevice::Device};
 
+#[derive(Debug, Clone)]
 pub struct DebugServer<'a> {
     pub(crate) pointer: unsafe_bindings::debugserver_client_t,
     pub(crate) phantom: std::marker::PhantomData<&'a Device>,
@@ -313,12 +314,7 @@ impl DebugServer<'_> {
                 &mut encoded_buffer_size,
             );
         }
-        unsafe {
-            std::slice::from_raw_parts(
-                encoded_buffer,
-                encoded_buffer_size as usize,
-            ).to_vec()
-        }
+        unsafe { std::slice::from_raw_parts(encoded_buffer, encoded_buffer_size as usize).to_vec() }
     }
 
     /// Decodes a string encoded in hex

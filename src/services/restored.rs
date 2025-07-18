@@ -7,6 +7,7 @@ use crate::{bindings as unsafe_bindings, error::RestoredError, idevice::Device};
 use plist_plus::Plist;
 
 /// Restores an iDevice to a specific backup or iOS version
+#[derive(Debug, Clone)]
 pub struct RestoredClient<'a> {
     pub(crate) pointer: unsafe_bindings::restored_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

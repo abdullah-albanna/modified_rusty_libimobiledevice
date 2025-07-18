@@ -10,6 +10,7 @@ use crate::{
 use plist_plus::Plist;
 
 /// First used on MacOS, this service is used to inspect the JavaScript and HTML of a site running on the device
+#[derive(Debug, Clone)]
 pub struct WebInspectorClient<'a> {
     pub(crate) pointer: unsafe_bindings::webinspector_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

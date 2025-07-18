@@ -5,6 +5,7 @@ use crate::{
     services::lockdownd::LockdowndService,
 };
 
+#[derive(Debug, Clone)]
 pub struct PropertyListServiceClient<'a> {
     pub(crate) pointer: unsafe_bindings::property_list_service_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

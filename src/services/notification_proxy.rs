@@ -8,6 +8,7 @@ use crate::idevice::Device;
 use crate::services::lockdownd::LockdowndService;
 
 /// A service to proxy notifications to the device
+#[derive(Debug, Clone)]
 pub struct NotificationProxyClient<'a> {
     pub(crate) pointer: unsafe_bindings::np_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

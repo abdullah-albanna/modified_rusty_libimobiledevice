@@ -13,6 +13,7 @@ use plist_plus::Plist;
 /// A jumping point for other services.
 /// Lockdownd is in charge of starting other services and opening ports for them.
 /// Lockdown can be used for simple data transactions, but most requests will be done through other services.
+#[derive(Debug, Clone)]
 pub struct LockdowndClient<'a> {
     pub(crate) pointer: unsafe_bindings::lockdownd_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

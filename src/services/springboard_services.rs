@@ -13,6 +13,7 @@ use crate::{
 use plist_plus::Plist;
 
 /// A service to manage Springboard on iOS
+#[derive(Debug, Clone)]
 pub struct SpringboardServicesClient<'a> {
     pub(crate) pointer: unsafe_bindings::sbservices_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

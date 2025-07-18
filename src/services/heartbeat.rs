@@ -18,6 +18,7 @@ use plist_plus::Plist;
 /// * The host will echo back the message at the interval defined in the message (give buffer time)
 ///
 /// **Note** The device will kill the heartbeat connection if packets are echoed too frequently
+#[derive(Debug, Clone)]
 pub struct HeartbeatClient {
     pub(crate) pointer: unsafe_bindings::heartbeat_client_t,
 }

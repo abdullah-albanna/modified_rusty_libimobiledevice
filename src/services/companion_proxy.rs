@@ -10,6 +10,7 @@ use plist_plus::Plist;
 
 /// A proxy for interoping with devices paired with the iOS device
 /// This includes the Apple Watch
+#[derive(Debug, Clone)]
 pub struct CompanionProxy<'a> {
     pub(crate) pointer: unsafe_bindings::companion_proxy_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

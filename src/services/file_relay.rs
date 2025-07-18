@@ -8,6 +8,7 @@ use crate::{
 };
 
 /// Relays files from the iOS device to the host
+#[derive(Debug, Clone)]
 pub struct FileRelay<'a> {
     pub pointer: unsafe_bindings::file_relay_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

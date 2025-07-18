@@ -9,6 +9,7 @@ use crate::{
     services::lockdownd::LockdowndService,
 };
 
+#[derive(Debug, Clone)]
 pub struct ScreenshotrClient<'a> {
     pub(crate) pointer: unsafe_bindings::screenshotr_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

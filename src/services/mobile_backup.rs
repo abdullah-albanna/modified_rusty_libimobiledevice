@@ -16,12 +16,14 @@ use plist_plus::Plist;
 
 /// Manages backups on older devices
 /// This is only for old versions of iOS, you are probably looking for MobileBackup2
+#[derive(Debug, Clone)]
 pub struct MobileBackupClient<'a> {
     pub(crate) pointer: unsafe_bindings::mobilebackup_client_t,
     phantom: std::marker::PhantomData<&'a Device>,
 }
 
 /// Manages backups on new devices
+#[derive(Debug, Clone)]
 pub struct MobileBackup2Client<'a> {
     pub(crate) pointer: unsafe_bindings::mobilebackup2_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

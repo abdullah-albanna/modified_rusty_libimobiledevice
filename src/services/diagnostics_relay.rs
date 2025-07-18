@@ -11,6 +11,7 @@ use crate::{
 use plist_plus::Plist;
 
 /// Relays diagnostic logs from the iOS device to the host
+#[derive(Debug, Clone)]
 pub struct DiagnosticsRelay<'a> {
     pub(crate) pointer: unsafe_bindings::diagnostics_relay_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

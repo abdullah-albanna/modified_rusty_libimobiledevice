@@ -11,6 +11,7 @@ use plist_plus::Plist;
 
 /// A service that manages data at the first unlock screen after boot.
 /// Prepare to be boarded!
+#[derive(Debug, Clone)]
 pub struct PreboardClient<'a> {
     pub(crate) pointer: unsafe_bindings::preboard_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

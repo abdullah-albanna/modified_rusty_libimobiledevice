@@ -15,6 +15,7 @@ use crate::{
 };
 
 /// Transfers files between host and the iDevice
+#[derive(Debug, Clone)]
 pub struct AfcClient<'a> {
     pub(crate) pointer: unsafe_bindings::afc_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

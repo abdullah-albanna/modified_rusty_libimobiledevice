@@ -15,6 +15,7 @@ use super::lockdownd::LockdowndService;
 use crate::{bindings as unsafe_bindings, error::MobileImageMounterError, idevice::Device};
 
 /// A service for mounting developer disk images on the device
+#[derive(Debug, Clone)]
 pub struct MobileImageMounter<'a> {
     pub(crate) pointer: unsafe_bindings::mobile_image_mounter_client_t,
     pub(crate) phantom: std::marker::PhantomData<&'a Device>,

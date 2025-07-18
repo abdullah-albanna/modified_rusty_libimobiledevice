@@ -11,6 +11,7 @@ use plist_plus::Plist;
 
 /// iTunes file transfer service.
 /// This differs from AFC in that this is for managing files in app specific storage accessable by iTunes.
+#[derive(Debug, Clone)]
 pub struct HouseArrest<'a> {
     pub(crate) pointer: unsafe_bindings::house_arrest_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

@@ -9,6 +9,7 @@ use std::{ffi::CString, os::raw::c_char};
 use plist_plus::Plist;
 
 /// Manges and checks provisioning profiles
+#[derive(Debug, Clone)]
 pub struct MisagentClient<'a> {
     pub(crate) pointer: unsafe_bindings::misagent_client_t,
     phantom: std::marker::PhantomData<&'a Device>,

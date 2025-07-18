@@ -52,6 +52,7 @@ static INSTALLATION_CALLBACK: Lazy<Mutex<Option<CallbackFunction>>> =
     Lazy::new(|| Mutex::new(None));
 
 /// Manages installing, removing and modifying applications on the device
+#[derive(Debug, Clone)]
 pub struct InstProxyClient<'a> {
     pub(crate) pointer: unsafe_bindings::instproxy_client_t,
     pub label: String,
